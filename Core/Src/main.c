@@ -60,6 +60,10 @@ int topSurface = 0;
 short last_ax, last_ay, last_az; // 用来保存上次的加速度数据
 float threshold = 1.75;          // 阈值
 int output_on = 0;
+
+uint8_t g_ucUsart1ReceiveData;
+
+int mode[5] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -109,6 +113,7 @@ int main(void)
   mpu_dmp_init(); // dmp初始化
   printf("初始化成功！\r\n");
   HAL_TIM_Base_Start_IT(&htim1);
+  HAL_UART_Receive_IT(&huart1, &g_ucUsart1ReceiveData, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -190,23 +195,36 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     float delta_aacz = fabsf(az - last_az);
     float total_delta = sqrtf(delta_aacx * delta_aacx + delta_aacy * delta_aacy + delta_aacz * delta_aacz);
     // temp = MPU_Get_Temperature();               // 得到温度信息
-    // printf("data:%.1f,%.1f,%.1f,%hd,%hd,%hd\r\n", roll, pitch, yaw, aacx, aacy, aacz); // 串口1输出采集信息
-    printf("data:%.1f,%.1f,%.1f\r\n", ax, ay, az); // 串口1输出采集信息
+
+    // printf("data:%.1f,%.1f,%.1f\r\n", ax, ay, az); // 串口1输出采集信息
+
     // 检测是否有摇动
-    // if (total_delta > threshold)
-    // {
-    //   output_on = !output_on;
-    //   if (output_on)
-    //   {
-    //     printf("ON\r\n");
-    //   }
-    //   else
-    //   {
-    //     printf("OFF\r\n");
-    //   }
-    // }
+    if (mode[0] == 1)
+    {
+      if (total_delta > threshold)
+      {
+        output_on = !output_on;
+        if (output_on)
+        {
+          printf("ON\r\n");
+        }
+        else
+        {
+          printf("OFF\r\n");
+        }
+      }
+    }
   }
-  // topSurfaceIdentify();
+
+  if (mode[1] == 1)
+  {
+    printf("data:%.1f,%.1f,%.1f\r\n", roll, pitch, yaw); // 串口1输出采集信息
+  }
+
+  if (mode[2] == 1)
+  {
+    topSurfaceIdentify();
+  }
 }
 void topSurfaceIdentify()
 {
