@@ -2,7 +2,6 @@
 "engineerleague2023\startup_stm32f103xb.o"
 "engineerleague2023\main.o"
 "engineerleague2023\gpio.o"
-"engineerleague2023\dma.o"
 "engineerleague2023\tim.o"
 "engineerleague2023\usart.o"
 "engineerleague2023\stm32f1xx_it.o"

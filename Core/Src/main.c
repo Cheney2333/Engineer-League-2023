@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -54,13 +53,15 @@
 float pitch, roll, yaw;    // 欧拉角
 short aacx, aacy, aacz;    // 加速度传感器原始数据
 short gyrox, gyroy, gyroz; // 陀螺仪原始数据
+float ax, ay, az;
 float temp;                // 温度
+int topSurface = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void topSurfaceIdentify(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -96,7 +97,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_TIM1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
@@ -111,7 +111,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    
+    HAL_Delay(500);
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    // topSurfaceIdentify();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -169,12 +171,49 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == (&htim1))
   {
     while (mpu_dmp_get_data(&pitch, &roll, &yaw))
-      ;                                                                            // 必须要用while等待，才能读取成功
-    MPU_Get_Accelerometer(&aacx, &aacy, &aacz);                                    // 得到加速度传感器数据
-    MPU_Get_Gyroscope(&gyrox, &gyroy, &gyroz);                                     // 得到陀螺仪数据
-    temp = MPU_Get_Temperature();                                                  // 得到温度信息
-    printf("data:%.1f,%.1f,%.1f\r\n", roll, pitch, yaw); // 串口1输出采集信息
-    // printf("aX:%hd\taY:%hd\taZ:%hd\r\n", aacx, aacy, aacz);                        // 串口1输出采集信息
+      ;                                         // 必须要用while等待，才能读取成功
+    MPU_Get_Accelerometer(&aacx, &aacy, &aacz); // 得到加速度传感器数据
+		ax = (float)aacx / 16384.0;
+		ay = (float)aacy / 16384.0;
+		az = (float)aacz / 16384.0;
+    MPU_Get_Gyroscope(&gyrox, &gyroy, &gyroz);  // 得到陀螺仪数据
+    // temp = MPU_Get_Temperature();               // 得到温度信息
+    // printf("data:%.1f,%.1f,%.1f,%hd,%hd,%hd\r\n", roll, pitch, yaw, aacx, aacy, aacz); // 串口1输出采集信息
+    printf("aX:%.1f\taY:%.1f\taZ:%.1f\r\n", ax, ay, az);                        // 串口1输出采集信息
+    // topSurfaceIdentify();
+  }
+}
+void topSurfaceIdentify()
+{
+  if (roll > -30 && roll < 30)
+  {
+    // topSurface = 4; // 顶面为E
+    printf("topSurface is E\r\n");
+  }
+  else if (roll > 60 && roll < 120)
+  {
+    printf("topSurface is D\r\n");
+  }
+  else if ((roll < 180 && roll > 150) || (roll < -150 && roll > -180))
+  {
+    // topSurface = 5; // 顶面为F
+    printf("topSurface is F\r\n");
+  }
+  else
+  {
+    if (pitch > 60)
+    {
+      // topSurface = 0; // 顶面为A
+      printf("topSurface is A\r\n");
+    }
+    else if (pitch > -30 && pitch < 30)
+    {
+      printf("topSurface is B\r\n");
+    }
+    else if (pitch < -60)
+    {
+      printf("topSurface is C\r\n");
+    }
   }
 }
 /* USER CODE END 4 */

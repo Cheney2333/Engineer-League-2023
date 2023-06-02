@@ -28,8 +28,8 @@ engineerleague2023/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_tim_ex.h \
   ..\Drivers\STM32F1xx_HAL_Driver\Inc\stm32f1xx_hal_uart.h \
-  ..\Core\Inc\dma.h ..\Core\Inc\tim.h ..\Core\Inc\usart.h \
-  ..\Core\Inc\gpio.h D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
+  ..\Core\Inc\tim.h ..\Core\Inc\usart.h ..\Core\Inc\gpio.h \
+  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
   ..\Core\HARDWARE\MPU6050\IIC.h \
   D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\inttypes.h \
   ..\Core\HARDWARE\MPU6050\mpu6050.h ..\Core\HARDWARE\MPU6050\inv_mpu.h \
