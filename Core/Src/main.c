@@ -29,7 +29,7 @@
 #include "mpu6050.h"
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
-
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,8 +54,12 @@ float pitch, roll, yaw;    // 欧拉角
 short aacx, aacy, aacz;    // 加速度传感器原始数据
 short gyrox, gyroy, gyroz; // 陀螺仪原始数据
 float ax, ay, az;
-float temp;                // 温度
+float temp; // 温度
 int topSurface = 0;
+
+short last_ax, last_ay, last_az; // 用来保存上次的加速度数据
+float threshold = 1.75;          // 阈值
+int output_on = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -168,20 +172,41 @@ int fputc(int ch, FILE *f)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+  last_ax = ax;
+  last_ay = ay;
+  last_az = az;
   if (htim == (&htim1))
   {
     while (mpu_dmp_get_data(&pitch, &roll, &yaw))
       ;                                         // 必须要用while等待，才能读取成功
     MPU_Get_Accelerometer(&aacx, &aacy, &aacz); // 得到加速度传感器数据
-		ax = (float)aacx / 16384.0;
-		ay = (float)aacy / 16384.0;
-		az = (float)aacz / 16384.0;
-    MPU_Get_Gyroscope(&gyrox, &gyroy, &gyroz);  // 得到陀螺仪数据
+    ax = (float)aacx / 16384.0;
+    ay = (float)aacy / 16384.0;
+    az = (float)aacz / 16384.0;
+    MPU_Get_Gyroscope(&gyrox, &gyroy, &gyroz); // 得到陀螺仪数据
+    // 计算加速度的变化
+    float delta_aacx = fabsf(ax - last_ax);
+    float delta_aacy = fabsf(ay - last_ay);
+    float delta_aacz = fabsf(az - last_az);
+    float total_delta = sqrtf(delta_aacx * delta_aacx + delta_aacy * delta_aacy + delta_aacz * delta_aacz);
     // temp = MPU_Get_Temperature();               // 得到温度信息
     // printf("data:%.1f,%.1f,%.1f,%hd,%hd,%hd\r\n", roll, pitch, yaw, aacx, aacy, aacz); // 串口1输出采集信息
-    printf("aX:%.1f\taY:%.1f\taZ:%.1f\r\n", ax, ay, az);                        // 串口1输出采集信息
-    // topSurfaceIdentify();
+    printf("data:%.1f,%.1f,%.1f\r\n", ax, ay, az); // 串口1输出采集信息
+    // 检测是否有摇动
+    // if (total_delta > threshold)
+    // {
+    //   output_on = !output_on;
+    //   if (output_on)
+    //   {
+    //     printf("ON\r\n");
+    //   }
+    //   else
+    //   {
+    //     printf("OFF\r\n");
+    //   }
+    // }
   }
+  // topSurfaceIdentify();
 }
 void topSurfaceIdentify()
 {

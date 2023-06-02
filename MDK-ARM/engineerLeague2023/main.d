@@ -33,4 +33,5 @@ engineerleague2023/main.o: ..\Core\Src\main.c ..\Core\Inc\main.h \
   ..\Core\HARDWARE\MPU6050\IIC.h \
   D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\inttypes.h \
   ..\Core\HARDWARE\MPU6050\mpu6050.h ..\Core\HARDWARE\MPU6050\inv_mpu.h \
-  ..\Core\HARDWARE\MPU6050\inv_mpu_dmp_motion_driver.h
+  ..\Core\HARDWARE\MPU6050\inv_mpu_dmp_motion_driver.h \
+  D:\Keil_v5\ARM\ARMCLANG\Bin\..\include\math.h
