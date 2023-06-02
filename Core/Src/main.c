@@ -39,7 +39,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define INITIAL_THRESHOLD 8.0 // 初始阈值
+#define DELAY_COUNT 150        // 延迟计数，根据实际情况调整
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,19 +58,25 @@ float ax, ay, az;
 float temp; // 温度
 int topSurface = 0;
 
-short last_ax, last_ay, last_az; // 用来保存上次的加速度数据
-float threshold = 1.75;          // 阈值
+short last_ax, last_ay, last_az;              // 用来保存上次的加速度数据
+float threshold_movement = INITIAL_THRESHOLD; // 动态阈值
+int delay_count = 0;                          // 延迟计数器
+float threshold = 1.75;                       // 阈值
 int output_on = 0;
 
 uint8_t g_ucUsart1ReceiveData;
 
 int mode[5] = {0};
+
+float ax_integral = 0.0;
+float ay_integral = 0.0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 void topSurfaceIdentify(void);
+void check_movement(float ax, float ay);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -196,7 +203,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     float total_delta = sqrtf(delta_aacx * delta_aacx + delta_aacy * delta_aacy + delta_aacz * delta_aacz);
     // temp = MPU_Get_Temperature();               // 得到温度信息
 
-    // printf("data:%.1f,%.1f,%.1f\r\n", ax, ay, az); // 串口1输出采集信息
+    if (mode[0] == 0 && mode[1] == 0 && mode[2] == 0 && mode[3] == 0 && mode[4] == 0)
+    {
+      printf("data:%.1f,%.1f,%.1f\r\n", ax, ay, az);
+    }
 
     // 检测是否有摇动
     if (mode[0] == 1)
@@ -214,16 +224,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         }
       }
     }
-  }
+    if (mode[1] == 1)
+    {
+      printf("data:%.1f,%.1f,%.1f\r\n", roll, pitch, yaw); // 串口1输出采集信息
+    }
 
-  if (mode[1] == 1)
-  {
-    printf("data:%.1f,%.1f,%.1f\r\n", roll, pitch, yaw); // 串口1输出采集信息
-  }
-
-  if (mode[2] == 1)
-  {
-    topSurfaceIdentify();
+    if (mode[2] == 1)
+    {
+      topSurfaceIdentify();
+    }
+    if (mode[3 == 1])
+    {
+      /* code */
+    }
+    if (mode[4] == 1)
+    {
+      check_movement(ax, ay);
+    }
   }
 }
 void topSurfaceIdentify()
