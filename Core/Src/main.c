@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -29,6 +30,7 @@
 #include "mpu6050.h"
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,7 +51,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+float pitch, roll, yaw;    // 欧拉角
+short aacx, aacy, aacz;    // 加速度传感器原始数据
+short gyrox, gyroy, gyroz; // 陀螺仪原始数据
+float temp;                // 温度
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,10 +75,6 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  float pitch, roll, yaw;    // 欧拉角
-  short aacx, aacy, aacz;    // 加速度传感器原始数据
-  short gyrox, gyroy, gyroz; // 原始数据
-  float temp;                // 温度
 
   /* USER CODE END 1 */
 
@@ -95,31 +96,25 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   MPU_Init();     // MPU6050初始化
   mpu_dmp_init(); // dmp初始化
   printf("初始化成功！\r\n");
+  HAL_TIM_Base_Start_IT(&htim1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_Delay(500);
-    while (mpu_dmp_get_data(&pitch, &roll, &yaw))
-      ;
-    MPU_Get_Accelerometer(&aacx, &aacy, &aacz); // 得到加速度传感器数据
-    MPU_Get_Gyroscope(&gyrox, &gyroy, &gyroz);  // 得到陀螺仪数据
-    temp = MPU_Get_Temperature();               // 得到温度数据
-    printf("X:%.1f°\tY:%.1f°\tZ:%.1f°\t%.2f°C\r\n", roll, pitch, yaw, temp / 100);
-    // printf("aX:%hd\taY:%hd\taZ:%hd\r\n", aacx, aacy, aacz);
-    printf("aX:%hd\taY:%hd\taZ:%hd\r\n", aacx, aacy, aacz);
-
+    
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
-    // printf("test\r\n");
   }
   /* USER CODE END 3 */
 }
@@ -163,11 +158,24 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
 int fputc(int ch, FILE *f)
 {
   HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
   return ch;
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim == (&htim1))
+  {
+    while (mpu_dmp_get_data(&pitch, &roll, &yaw))
+      ;                                                                            // 必须要用while等待，才能读取成功
+    MPU_Get_Accelerometer(&aacx, &aacy, &aacz);                                    // 得到加速度传感器数据
+    MPU_Get_Gyroscope(&gyrox, &gyroy, &gyroz);                                     // 得到陀螺仪数据
+    temp = MPU_Get_Temperature();                                                  // 得到温度信息
+    printf("data:%.1f,%.1f,%.1f\r\n", roll, pitch, yaw); // 串口1输出采集信息
+    // printf("aX:%hd\taY:%hd\taZ:%hd\r\n", aacx, aacy, aacz);                        // 串口1输出采集信息
+  }
 }
 /* USER CODE END 4 */
 
