@@ -27,24 +27,13 @@ Project File Date:  06/02/2023
 <h2>Output:</h2>
 *** Using Compiler 'V6.19', folder: 'D:\Keil_v5\ARM\ARMCLANG\Bin'
 Build target 'engineerLeague2023'
-../Core/Src/main.c(118): warning: format specifies type 'double' but the argument has type 'short' [-Wformat]
-    printf("aX:%.1f\taY:%.1f\taZ:%.1f\r\n", aacx, aacy, aacz);
-               ~~~~                         ^~~~
-               %.1hd
-../Core/Src/main.c(118): warning: format specifies type 'double' but the argument has type 'short' [-Wformat]
-    printf("aX:%.1f\taY:%.1f\taZ:%.1f\r\n", aacx, aacy, aacz);
-                        ~~~~                      ^~~~
-                        %.1hd
-../Core/Src/main.c(118): warning: format specifies type 'double' but the argument has type 'short' [-Wformat]
-    printf("aX:%.1f\taY:%.1f\taZ:%.1f\r\n", aacx, aacy, aacz);
-                                 ~~~~                   ^~~~
-                                 %.1hd
-3 warnings generated.
 compiling main.c...
+compiling mpu6050.c...
+compiling inv_mpu.c...
 linking...
 Program Size: Code=24452 RO-data=3776 RW-data=76 ZI-data=1204  
 FromELF: creating hex file...
-"engineerLeague2023\engineerLeague2023.axf" - 0 Error(s), 3 Warning(s).
+"engineerLeague2023\engineerLeague2023.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -67,7 +56,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.6.0
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>

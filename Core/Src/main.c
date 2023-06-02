@@ -70,10 +70,10 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  float pitch, roll, yaw;    // ćŹ§ćč§?
-  short aacx, aacy, aacz;    // ĺ é?ĺşŚäź ćĺ¨ĺĺ§ć°ć?
+  float pitch, roll, yaw;    // 欧拉角
+  short aacx, aacy, aacz;    // 加速度传感器原始数据
   short gyrox, gyroy, gyroz; // 原始数据
-  float temp;                // ć¸ŠĺşŚ
+  float temp;                // 温度
 
   /* USER CODE END 1 */
 
@@ -98,8 +98,8 @@ int main(void)
   MX_TIM1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  MPU_Init();     // MPU6050ĺĺ§ĺ?
-  mpu_dmp_init(); // dmpĺĺ§ĺ?
+  MPU_Init();     // MPU6050初始化
+  mpu_dmp_init(); // dmp初始化
   printf("初始化成功！\r\n");
   /* USER CODE END 2 */
 
@@ -109,14 +109,13 @@ int main(void)
   {
     HAL_Delay(500);
     while (mpu_dmp_get_data(&pitch, &roll, &yaw))
-      ;                                                                            // ĺżéĄťčŚç¨whileç­ĺžďźćč˝čŻťĺćĺ?
-    MPU_Get_Accelerometer(&aacx, &aacy, &aacz);                                    // ĺžĺ°ĺ é?ĺşŚäź ćĺ¨ć°ć?
-    MPU_Get_Gyroscope(&gyrox, &gyroy, &gyroz);                                     // ĺžĺ°é?čşäťŞć°ćŽ
-    temp = MPU_Get_Temperature();                                                  // ĺžĺ°ć¸ŠĺşŚäżĄćŻ
-    printf("X:%.1f°\tY:%.1f°\tZ:%.1f°\t%.2f°C\r\n", roll, pitch, yaw, temp / 100); // ä¸˛ĺŁ1čžĺşééäżĄćŻ
+      ;
+    MPU_Get_Accelerometer(&aacx, &aacy, &aacz); // 得到加速度传感器数据
+    MPU_Get_Gyroscope(&gyrox, &gyroy, &gyroz);  // 得到陀螺仪数据
+    temp = MPU_Get_Temperature();               // 得到温度数据
+    printf("X:%.1f°\tY:%.1f°\tZ:%.1f°\t%.2f°C\r\n", roll, pitch, yaw, temp / 100);
     // printf("aX:%hd\taY:%hd\taZ:%hd\r\n", aacx, aacy, aacz);
-    printf("aX:%.1f\taY:%.1f\taZ:%.1f\r\n", aacx, aacy, aacz);
-
+    printf("aX:%hd\taY:%hd\taZ:%hd\r\n", aacx, aacy, aacz);
 
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
