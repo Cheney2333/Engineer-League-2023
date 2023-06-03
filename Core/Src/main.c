@@ -40,7 +40,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define INITIAL_THRESHOLD 8.0 // 初始阈值
-#define DELAY_COUNT 150        // 延迟计数，根据实际情况调整
+#define DELAY_COUNT 150       // 延迟计数，根据实际情况调整
+#define InRangeOf_ACC 0.2
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -70,13 +71,17 @@ int mode[5] = {0};
 
 float ax_integral = 0.0;
 float ay_integral = 0.0;
+
+char movement_history[15] = {'\0'};
+uint8_t movement_history_index = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void topSurfaceIdentify(void);
+char topSurfaceIdentify(void);
 void check_movement(float ax, float ay);
+HAL_StatusTypeDef in_range_of(float value, float min, float max);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -233,48 +238,67 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
       topSurfaceIdentify();
     }
-    if (mode[3 == 1])
+    if (mode[3] == 1 && mode[4] == 0)
     {
       /* code */
     }
-    if (mode[4] == 1)
+    if (mode[4] == 1 && mode[3] == 0)
     {
       check_movement(ax, ay);
     }
   }
 }
-void topSurfaceIdentify()
+char topSurfaceIdentify()
 {
-  if (roll > -30 && roll < 30)
-  {
-    // topSurface = 4; // 顶面为E
+  if (
+      in_range_of(az, 1 - InRangeOf_ACC, 1 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK)
+  { // 处于E面
     printf("topSurface is E\r\n");
   }
-  else if (roll > 60 && roll < 120)
-  {
+  else if (
+      in_range_of(az, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 1 - InRangeOf_ACC, 1 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK)
+  { // 处于C面
+    printf("topSurface is C\r\n");
+  }
+  else if (
+      in_range_of(az, -0.1 - InRangeOf_ACC, -0.1 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 1 - InRangeOf_ACC, 1 + InRangeOf_ACC) == HAL_OK)
+  { // 处于D面
     printf("topSurface is D\r\n");
   }
-  else if ((roll < 180 && roll > 150) || (roll < -150 && roll > -180))
-  {
-    // topSurface = 5; // 顶面为F
+  else if (
+      in_range_of(az, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, -1 - InRangeOf_ACC, -1 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK)
+  { // 处于B面
+    printf("topSurface is B\r\n");
+  }
+  else if (
+      in_range_of(az, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, -1 - InRangeOf_ACC, -1 + InRangeOf_ACC) == HAL_OK)
+  { // 处于A面
+    printf("topSurface is A\r\n");
+  }
+  else if (
+      in_range_of(az, -1 - InRangeOf_ACC, -1 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK)
+  { // 处于F面
     printf("topSurface is F\r\n");
   }
   else
   {
-    if (pitch > 60)
-    {
-      // topSurface = 0; // 顶面为A
-      printf("topSurface is A\r\n");
-    }
-    else if (pitch > -30 && pitch < 30)
-    {
-      printf("topSurface is B\r\n");
-    }
-    else if (pitch < -60)
-    {
-      printf("topSurface is C\r\n");
-    }
+    printf("topSurface is unknown\r\n");
   }
+}
+HAL_StatusTypeDef in_range_of(float value, float min, float max)
+{
+  if (value > min && value < max)
+  {
+    return HAL_OK;
+  }
+  else
+  {
+    return HAL_ERROR;
+  }
+}
+void check_movement(float ax, float ay)
+{
+  printf("Qian Mian de Qu Yu Yi Hou Zai Lai Tan Suo Ba!");
 }
 /* USER CODE END 4 */
 
