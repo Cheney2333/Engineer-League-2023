@@ -39,7 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define INITIAL_THRESHOLD 0.5 // 初始阈值
+#define INITIAL_THRESHOLD 0.4 // 初始阈值
 #define DELAY_COUNT 150       // 延迟计数，根据实际情况调整
 #define InRangeOf_ACC 0.2
 /* USER CODE END PD */
@@ -59,6 +59,7 @@ float ax, ay, az;
 float temp; // 温度
 int topSurface = 0;
 int count = 0;
+int shakeCount = 0;
 
 int positionX = 0;
 int positionY = 0;
@@ -231,16 +232,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // 检测是否有摇动
     if (mode[0] == 1)
     {
-      if (total_delta > threshold)
+      shakeCount++;
+      if (total_delta > threshold && shakeCount > 150)
       {
         output_on = !output_on;
         if (output_on)
         {
           printf("ON\r\n");
+          shakeCount = 0;
         }
         else
         {
           printf("OFF\r\n");
+          shakeCount = 0;
         }
       }
     }
@@ -255,6 +259,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if (mode[3] == 1)
     {
       count = 0;
+      positionX = 0;
+      positionY = 0;
     }
     if (mode[4] == 1)
     {
@@ -269,19 +275,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         printf("positionX: %d, positionY: %d\r\n", positionX, positionY);
         if (positionX > 0 && positionY > 0)
         {
-          printf("%s\r\n", board[3 - positionX][3 - positionY]);
+          printf("%s\r\n", board[3 - positionY][3 - positionX]);
         }
         if (positionX < 0 && positionY > 0)
         {
-          printf("%s\r\n", board[-positionX][3 - positionY]);
+          printf("%s\r\n", board[3 - positionY][-positionX]);
         }
         if (positionX < 0 && positionY < 0)
         {
-          printf("%s\r\n", board[-positionX][-positionY]);
+          printf("%s\r\n", board[-positionY][-positionX]);
         }
         if (positionX > 0 && positionY < 0)
         {
-          printf("%s\r\n", board[3 - positionX][-positionY]);
+          printf("%s\r\n", board[-positionY][3 - positionX]);
         }
       }
     }
