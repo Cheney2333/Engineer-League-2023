@@ -39,7 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define INITIAL_THRESHOLD 8.0 // 初始阈值
+#define INITIAL_THRESHOLD 0.5 // 初始阈值
 #define DELAY_COUNT 150       // 延迟计数，根据实际情况调整
 #define InRangeOf_ACC 0.2
 /* USER CODE END PD */
@@ -58,6 +58,10 @@ short gyrox, gyroy, gyroz; // 陀螺仪原始数据
 float ax, ay, az;
 float temp; // 温度
 int topSurface = 0;
+int count = 0;
+
+int positionX = 0;
+int positionY = 0;
 
 short last_ax, last_ay, last_az;              // 用来保存上次的加速度数据
 float threshold_movement = INITIAL_THRESHOLD; // 动态阈值
@@ -72,6 +76,14 @@ int mode[5] = {0};
 float ax_integral = 0.0;
 float ay_integral = 0.0;
 
+char cubeStatus[16][3];
+char lastCubeStatus[16][3];
+char *board[4][4] = {
+    {"00", "01", "02", "03"},
+    {"04", "05", "06", "07"},
+    {"08", "09", "10", "11"},
+    {"12", "13", "14", "15"}};
+
 char movement_history[15] = {'\0'};
 uint8_t movement_history_index = 0;
 /* USER CODE END PV */
@@ -81,6 +93,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 char topSurfaceIdentify(void);
 void check_movement(float ax, float ay);
+void check_for_movement(float ax, float ay);
 HAL_StatusTypeDef in_range_of(float value, float min, float max);
 /* USER CODE END PFP */
 
@@ -189,6 +202,8 @@ int fputc(int ch, FILE *f)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+  int flipCount = 0;
+
   last_ax = ax;
   last_ay = ay;
   last_az = az;
@@ -233,18 +248,42 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
       printf("data:%.1f,%.1f,%.1f\r\n", roll, pitch, yaw); // 串口1输出采集信息
     }
-
     if (mode[2] == 1)
     {
       topSurfaceIdentify();
     }
-    if (mode[3] == 1 && mode[4] == 0)
+    if (mode[3] == 1)
     {
-      /* code */
+      count = 0;
     }
-    if (mode[4] == 1 && mode[3] == 0)
+    if (mode[4] == 1)
     {
-      check_movement(ax, ay);
+      count++;
+      // printf("mode 4\r\n");
+      if (count > 100 && count < 500)
+      {
+        check_for_movement(ax, ay);
+      }
+      if (count == 500)
+      {
+        printf("positionX: %d, positionY: %d\r\n", positionX, positionY);
+        if (positionX > 0 && positionY > 0)
+        {
+          printf("%s\r\n", board[3 - positionX][3 - positionY]);
+        }
+        if (positionX < 0 && positionY > 0)
+        {
+          printf("%s\r\n", board[-positionX][3 - positionY]);
+        }
+        if (positionX < 0 && positionY < 0)
+        {
+          printf("%s\r\n", board[-positionX][-positionY]);
+        }
+        if (positionX > 0 && positionY < 0)
+        {
+          printf("%s\r\n", board[3 - positionX][-positionY]);
+        }
+      }
     }
   }
 }
@@ -253,36 +292,64 @@ char topSurfaceIdentify()
   if (
       in_range_of(az, 1 - InRangeOf_ACC, 1 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK)
   { // 处于E面
-    printf("topSurface is E\r\n");
+    if (mode[2] == 1)
+    {
+      printf("topSurface is E\r\n");
+    }
+    return 'E';
   }
   else if (
       in_range_of(az, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 1 - InRangeOf_ACC, 1 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK)
   { // 处于C面
-    printf("topSurface is C\r\n");
+    if (mode[2] == 1)
+    {
+      printf("topSurface is C\r\n");
+    }
+    return 'C';
   }
   else if (
       in_range_of(az, -0.1 - InRangeOf_ACC, -0.1 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 1 - InRangeOf_ACC, 1 + InRangeOf_ACC) == HAL_OK)
   { // 处于D面
-    printf("topSurface is D\r\n");
+    if (mode[2] == 1)
+    {
+      printf("topSurface is D\r\n");
+    }
+    return 'D';
   }
   else if (
       in_range_of(az, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, -1 - InRangeOf_ACC, -1 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK)
   { // 处于B面
-    printf("topSurface is B\r\n");
+    if (mode[2] == 1)
+    {
+      printf("topSurface is B\r\n");
+    }
+    return 'B';
   }
   else if (
       in_range_of(az, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, -1 - InRangeOf_ACC, -1 + InRangeOf_ACC) == HAL_OK)
   { // 处于A面
-    printf("topSurface is A\r\n");
+    if (mode[2] == 1)
+    {
+      printf("topSurface is A\r\n");
+    }
+    return 'A';
   }
   else if (
       in_range_of(az, -1 - InRangeOf_ACC, -1 + InRangeOf_ACC) == HAL_OK && in_range_of(ax, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK && in_range_of(ay, 0 - InRangeOf_ACC, 0 + InRangeOf_ACC) == HAL_OK)
   { // 处于F面
-    printf("topSurface is F\r\n");
+    if (mode[2] == 1)
+    {
+      printf("topSurface is F\r\n");
+    }
+    return 'F';
   }
   else
   {
-    printf("topSurface is unknown\r\n");
+    if (mode[2] == 1)
+    {
+      printf("topSurface is Unkonw\r\n");
+    }
+    return 'X';
   }
 }
 HAL_StatusTypeDef in_range_of(float value, float min, float max)
@@ -296,9 +363,32 @@ HAL_StatusTypeDef in_range_of(float value, float min, float max)
     return HAL_ERROR;
   }
 }
-void check_movement(float ax, float ay)
+void check_for_movement(float ax, float ay)
 {
-  printf("Qian Mian de Qu Yu Yi Hou Zai Lai Tan Suo Ba!");
+  if (ax > threshold_movement)
+  {
+    positionY--;
+    printf("backward\r\n");
+    count = 0;
+  }
+  if (ax < -threshold_movement)
+  {
+    positionY++;
+    printf("forward\r\n");
+    count = 0;
+  }
+  if (ay > threshold_movement)
+  {
+    positionX++;
+    printf("right\r\n");
+    count = 0;
+  }
+  if (ay < -threshold_movement)
+  {
+    positionX--;
+    printf("left\r\n");
+    count = 0;
+  }
 }
 /* USER CODE END 4 */
 
